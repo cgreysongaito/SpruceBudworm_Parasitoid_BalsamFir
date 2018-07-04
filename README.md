@@ -1,8 +1,8 @@
-R scripts for spruce budworm -- parasitoid food web articles first authored by Christopher J. Greyson-Gaito
+Flexibility of the spruce budworm -- parasitoid food web on balsam fir
 =========
 
-Flexibility of the spruce budworm -- parasitoid food web on balsam fir
-----------
+R script
+--------
 
 Christopher J. Greyson-Gaito, Kevin S. McCann, Jochen Fruend, Christopher J. Lucarotti, M. Alex Smith, Eldon S. Eveleigh
 ----------
