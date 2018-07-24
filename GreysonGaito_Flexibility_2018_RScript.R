@@ -1,8 +1,8 @@
 #############################################################################
-#            Flexibility of the spruce budworm – parasitoid food web 
+#            Flexibility of the spruce budworm – parasitoid food web
 #                   on balsam ﬁr
 #
-#     Christopher J. Greyson-Gaito, Kevin S. McCann, Jochen Fruend, Christopher J. Lucarotti, M. Alex Smith, Eldon S. Eveleigh
+#     Christopher J. Greyson-Gaito, Kevin S. McCann, Jochen Frund, Christopher J. Lucarotti, M. Alex Smith, Eldon S. Eveleigh
 #
 #
 #             R script for statistical analysis and figure plotting
@@ -14,13 +14,13 @@
 
 rm(list=ls())
 
-theme_simple <- function () { 
-  theme_grey() %+replace% 
+theme_simple <- function () {
+  theme_grey() %+replace%
     theme(
       axis.line=element_line(colour="black"),
-      panel.grid.minor=element_blank(), 
+      panel.grid.minor=element_blank(),
       panel.grid.major=element_blank(),
-      panel.background=element_blank(), 
+      panel.background=element_blank(),
       axis.title=element_text(size=28,face="bold"),
       axis.text.x=element_text(size=24, colour="Black"),
       axis.text.y=element_text(size=24, colour="Black"),
@@ -30,7 +30,7 @@ theme_simple <- function () {
       legend.title=element_text(size=15),
       legend.key=element_blank()
     )
-  
+
 }
 
 library(lattice)
@@ -46,6 +46,7 @@ library(vegan)
 library(goeveg)
 library(indicspecies)
 library(permute)
+library(scales)
 
 # Data Preparation -----
 ##Input data as data.table
@@ -60,7 +61,7 @@ interaction<-interactionimport%>%
   filter(!SpecID.low=="h00")%>% #remove undetermined herbivores from dataset (so similar to Eveleigh 2007 SI Materials and Methods)
   mutate(SpecID.high=ifelse(SpecID.high %in% c("pA3","p40"),"p05",SpecID.high))%>%#lumping unidentified ichnuemonids, unidentified braconids and unidentified ichnuemonoidea together into one group
   mutate(Plot=droplevels(Plot))%>%
-  mutate(Peak=ifelse(Plot=="3",Year-6,Year))%>% 
+  mutate(Peak=ifelse(Plot=="3",Year-6,Year))%>%
   mutate(Peak=Peak-85)%>% #plot 1 and 2 peaked in 85 and plot 3 peaked in 91. Therefore created new variable Peak to standardize the different plots by when they peak
   filter(CrownLevel=="mid") #using mid crown because royama 2017 used mid crown and because eveleigh and johns 2014 found that using mid crown samples are the best proxies for estimating spruce budworm and parasitoid densities
 
@@ -85,7 +86,7 @@ create.numSBWALTnparaprep<-function(plot){
   x<-data.frame(expand.grid(c(-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10),c("SBW","ALT")))%>%
     rename(Peak=Var1,SBWALT=Var2)%>%
     mutate(Plot=plot)
-  
+
   if (plot==1){
     x2<-x%>%filter(Peak<5)
   } else if (plot==2){
@@ -180,7 +181,7 @@ communitydietswitch<-full_join(ratioSBWparacommunity,ratioSBWbypeakplot,by=c("Pe
   mutate(bpa=as.factor(bpa))
 
 ###Linear mixed effects model of log10 ratio parasitoid emergence from spruce budworm and other caterpillars to the log10 ratio of total spruce budworm to other caterpillars. Using the diet switching method outlined by Greenwood, J. J. D., and R. A. Elton. 1979. Analysing experiments on frequency-dependent selection by predators. The Journal of Animal Ecology 48:721.
- 
+
 #All of the statistical analysis below follows the protocol outlined in Zuur, A., E. N. Ieno, N. Walker, A. A. Saveliev, and G. M. Smith. 2009. Mixed effects models and extensions in ecology with r. First edition. Springer-Verlag New York, New York, New York, United States of America.
 
 #Data Exploration
@@ -196,7 +197,7 @@ par(op)
 xyplot(logratioSBWEmerge~logratioSBWpeakplot, data=communitydietswitch, groups=Plot)
 
 #Creating the model
-#1.Start with a linear regression model that contains as many explanatory variables and their interactions as possible. 
+#1.Start with a linear regression model that contains as many explanatory variables and their interactions as possible.
 SBWALTdietswitchfulllinear<-lm(logratioSBWEmerge~logratioSBWpeakplot*Plot,data=communitydietswitch)
 communitydietswitch$resid<-NA
 communitydietswitch$resid<-SBWALTdietswitchfulllinear$residuals
@@ -259,7 +260,7 @@ avSEinterceptallplotsDS <- ((summary(SBWALTdietswitchreml)$tTable[1,2]+summary(S
 
 #average slope for all plots
 avslopeallplotsDS<-(((3*coef(SBWALTdietswitchreml)[2])+coef(SBWALTdietswitchreml)[5]+coef(SBWALTdietswitchreml)[6])/3)
-  
+
 #average standard error of slopes for all plots
 avSEslopeallplotsDS<-((summary(SBWALTdietswitchreml)$tTable[2,2]+summary(SBWALTdietswitchreml)$tTable[5,2]+summary(SBWALTdietswitchreml)$tTable[6,2])/3)
 
@@ -270,7 +271,7 @@ avSEslopeallplotsDS<-((summary(SBWALTdietswitchreml)$tTable[2,2]+summary(SBWALTd
 10^(avinterceptallplotsDS/avslopeallplotsDS) #V=1.210321
 
 
-#Calculating confidence limits of V using the quadratic function given in p731 in GreenWood and Elton (1979). 
+#Calculating confidence limits of V using the quadratic function given in p731 in GreenWood and Elton (1979).
 result <- function(a,b,c){
   if(delta(a,b,c) > 0){ # first case D>0
     x_1 = (-b+sqrt(delta(a,b,c)))/(2*a)
@@ -308,7 +309,7 @@ comswitchlogratioplot<-ggplot(communitydietswitch,aes(logratioSBWpeakplot, logra
   geom_vline(xintercept=0)+
   geom_line(data=dietswitchpredict,aes(logratioSBWpeakplot,yhat,linetype=Plot),size=2)+
   geom_point(aes(shape=Plot,colour=bpa),size=5)+
-  theme(axis.title.y=element_text(hjust=0.5, vjust=1.5), 
+  theme(axis.title.y=element_text(hjust=0.5, vjust=1.5),
         legend.text=element_text(size=14),legend.justification=c(1,0), legend.position=c(0.98,0.02),legend.box = "horizontal")+coord_fixed(ratio = 1)+scale_color_viridis(name="Peak", breaks=c("b","p","a"),labels=c("Before","During","After"), alpha = 1, begin = 0, end = 1, direction = 1, discrete = TRUE, option = "D")+scale_shape_manual(values=c(16,17,15),guide=FALSE)+scale_linetype_manual(values=c("dotted","dashed","solid"))+ylab("Log10 emergence \nspruce budworm:other caterpillars")+xlab("Log10 abundance \nspruce budworm:other caterpillars")
 
 
@@ -341,7 +342,7 @@ par(op)
 xyplot(NSBWALT~Peak, data=numSBWALT, groups=SBWALT)
 
 #Creating Model
-#1.Start with a linear regression model that contains as many explanatory variables and their interactions as possible. 
+#1.Start with a linear regression model that contains as many explanatory variables and their interactions as possible.
 SBWALTnumfulllinear<-lm(NSBWALT~Peak*SBWALT*Plot,data=numSBWALT)
 numSBWALT$resid<-NA
 numSBWALT$resid<-SBWALTnumfulllinear$residuals
@@ -446,7 +447,7 @@ SBWALTnumplot<-SBWALTnumpredict%>%
   geom_line(aes(Peak,yhat),size=2)+
   geom_point(data=numSBWALT,aes(Peak,NSBWALT,shape=Plot),size=5)+
   facet_wrap(~label,scales="free_y",ncol=1)+
-  theme(strip.background=element_blank(),strip.text.x=element_text(size=28), 
+  theme(strip.background=element_blank(),strip.text.x=element_text(size=28),
         axis.title.y=element_text(hjust=0.5, vjust=1.5),legend.text=element_text(size=14),legend.justification=c(1,0), legend.position=c(0.98,0.2))+
   ylab("Caterpillar abundance")+xlab("Years before/after peak")+ylim(c(0,NA))+scale_x_continuous(breaks=c(-2,0,2,4,6,8,10))+scale_shape_manual(values=c(16,17,15))
 
@@ -459,7 +460,7 @@ create.SBWALTparashareprep<-function(plot){
   x<-data.frame(expand.grid(c(-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10),c("SBW","ALT"),parashare))%>%
   rename(Peak=Var1,SBWALT=Var2,SpecID.high=Var3)%>%
   mutate(Plot=plot)
-  
+
   if (plot==1){
   x2<-x%>%filter(Peak<5)
   } else if (plot==2){
@@ -487,7 +488,7 @@ SBWALTEM<-interaction%>%
   group_by(Peak,Plot,SBWALT)%>%
   summarise(AvNEM=mean(NEM))%>%
   mutate(dummyPeak=Peak+4,label=as.factor(ifelse(SBWALT=="SBW", "spruce budworm","other caterpillars")))  #Creates a dataframe of the average number of emergences of parasitoids from spruce budworm or other caterpillars (all parasitoid taxa combined) for each peak and plot. Before taking the average, 0 values are added to any peak, plot, species combination that not have a parasitoid emerge from either spruce budworm or other caterpillars.
-  
+
 #Linear mixed effects model of log10 average number of emergences of parasitoids from spruce budworm or other caterpillars over time
 
 #All of the statistical analysis below follows the protocol outlined in Zuur, A., E. N. Ieno, N. Walker, A. A. Saveliev, and G. M. Smith. 2009. Mixed effects models and extensions in ecology with r. First edition. Springer-Verlag New York, New York, New York, United States of America.
@@ -505,7 +506,7 @@ par(op)
 xyplot(AvNEM~Peak, data=SBWALTEM, groups=SBWALT)
 
 #Creating the model
-#1.Start with a linear regression model that contains as many explanatory variables and their interactions as possible. 
+#1.Start with a linear regression model that contains as many explanatory variables and their interactions as possible.
 SBWALTEMfulllinear<-lm(AvNEM~Peak*SBWALT*Plot,data=SBWALTEM)
 SBWALTEM$resid<-NA
 SBWALTEM$resid<-SBWALTEMfulllinear$residuals
@@ -591,7 +592,7 @@ anova(SBWALTEMdrop3interactionml,SBWALTEMdropSBWALTPlotml)
 
 SBWALTEMdropdummyPeakSBWALTml2<-update(SBWALTEMdropdummyPeakPlotml,.~.-dummyPeak:SBWALT)
 anova(SBWALTEMdropdummyPeakPlotml,SBWALTEMdropdummyPeakSBWALTml2)
- 
+
 SBWALTEMdropSBWALTPlotml2<-update(SBWALTEMdropdummyPeakPlotml,.~.-SBWALT:Plot)
 anova(SBWALTEMdropdummyPeakPlotml,SBWALTEMdropSBWALTPlotml2)
 
@@ -608,7 +609,7 @@ anova(SBWALTEMdropSBWALTPlotml2,SBWALTEMdropPlotml)
 # drop Plot because p-value = 0.3747
 
 #7. Refit the model found in step 6. with REML estimation
-SBWALTEMfinalmodel<-gls(AvNEM~dummyPeak*SBWALT,weights=varIdent(form=~1|SBWALT),data=SBWALTEM, method="REML") 
+SBWALTEMfinalmodel<-gls(AvNEM~dummyPeak*SBWALT,weights=varIdent(form=~1|SBWALT),data=SBWALTEM, method="REML")
 
 summary(SBWALTEMfinalmodel)
 
@@ -624,7 +625,7 @@ SBWALTEMplot<-AvNEMpredict%>%
   geom_line(aes(Peak,yhat),size=2)+
   geom_point(data=SBWALTEM,aes(Peak,AvNEM,shape=Plot),size=5)+
   facet_wrap(~label,scales="free_y",ncol=1)+
-  theme(strip.background=element_blank(),strip.text.x=element_text(size=28), 
+  theme(strip.background=element_blank(),strip.text.x=element_text(size=28),
         axis.title.y=element_text(hjust=0.5, vjust=1.5))+
   ylab("Number of parasitoid \nemergences")+xlab("Years before/after peak")+ylim(c(0,NA))+scale_shape_manual(values=c(16,17,15),guide=FALSE)
 
@@ -715,10 +716,10 @@ turnovercommat%<>%select(-c(Peak,Plot,bpa))#removes the factors from the datafra
 
 turnovercommat[is.na(turnovercommat)]<-0#replaces any NA values with 0. these NA values were created when the long format data was spread into a wide format dataframe and where species were not found for a certain Peak or Plot.
 
-dimcheckMDS(turnovercommat, distance = "bray", k = 6, trymax = 30, 
+dimcheckMDS(turnovercommat, distance = "bray", k = 6, trymax = 30,
         autotransform=TRUE) #after exmining screeplot from 6 dimensions to 1 dimension, chosen to use 2 dimensions because additional dimensions provide small reductions in stress
 
-turnoverNMDS <- metaMDS(turnovercommat, distance = "bray", k = 2, trymax = 50, 
+turnoverNMDS <- metaMDS(turnovercommat, distance = "bray", k = 2, trymax = 50,
                         autotransform=TRUE)
 
 stressplot(turnoverNMDS)  ##to test if distances as represented in ordination are correlated with actual distances
@@ -735,9 +736,9 @@ turnoverdatascores$bpa<-factors$bpa
 
 # function for creating ellipses in nmds plot
 #adapted from  http://stackoverflow.com/questions/13794419/plotting-ordiellipse-function-from-vegan-package-onto-nmds-plot-created-in-ggplo
-veganCovEllipsenew <- function (x, scale = 1, npoints = 100) 
+veganCovEllipsenew <- function (x, scale = 1, npoints = 100)
 {
-  cov <- cov.wt(cbind(x$NMDS1,x$NMDS2),wt=rep(1/length(x$NMDS1),length(x$NMDS1)))$cov 
+  cov <- cov.wt(cbind(x$NMDS1,x$NMDS2),wt=rep(1/length(x$NMDS1),length(x$NMDS1)))$cov
   center <- c(mean(x$NMDS1),mean(x$NMDS2))
   theta <- (0:npoints) * 2 * pi/npoints
   Circle <- cbind(cos(theta), sin(theta))
@@ -758,10 +759,10 @@ df_ell.bpa<-turnoverdatascores%>%
 turnoverNMDSplot<-ggplot(turnoverdatascores)+
   geom_point(aes(NMDS1,NMDS2, shape=Plot, colour=bpa),size=5)+
   geom_path(data=df_ell.bpa, aes(x=NMDS1, y=NMDS2, colour=bpa), size=1.5)+
-  theme(axis.title.y=element_text(hjust=0.5, vjust=1.5), 
+  theme(axis.title.y=element_text(hjust=0.5, vjust=1.5),
         legend.text=element_text(size=14),
         legend.title=element_text(size=15),
-        legend.justification=c(1,0.99), 
+        legend.justification=c(1,0.99),
         legend.position=c(1,0.99),
         legend.box = "horizontal")+
   coord_fixed(ratio = 1)+scale_color_viridis(name="Peak", breaks=c("b","p","a"),labels=c("Before","During","After"), alpha = 1, begin = 0, end = 1, direction = 1, discrete = TRUE, option = "D")+scale_shape_manual(values=c(16,17,15))+scale_x_continuous(breaks=c(-1,0,1))
@@ -870,7 +871,7 @@ dev.off()
 
 intdist<-bipartitegraphSBWALT%>%
 lapply(function(x) {y<-data.frame(t(x))
-if ("SBW" %in% colnames(y)) 
+if ("SBW" %in% colnames(y))
     {mutate(y,ALT=ifelse(ALT==0,NA,ALT),SBW=ifelse(SBW==0,NA,SBW))%>%
       summarise(medALT=median(ALT, na.rm=TRUE),maxALT=max(ALT,na.rm=TRUE),medSBW=median(SBW, na.rm=TRUE),maxSBW=max(SBW, na.rm=TRUE))%>%
       mutate(medmaxratioALT=medALT/maxALT,medmaxratioSBW=medSBW/maxSBW)}
@@ -929,7 +930,7 @@ par(op)
 #3. Relationships between the response variable and the explanatory variables.
 xyplot(npara~Peak, data=nparaSBWALT, groups=SBWALT)
 #Creating the model
-#1.Start with a linear regression model that contains as many explanatory variables and their interactions as possible. 
+#1.Start with a linear regression model that contains as many explanatory variables and their interactions as possible.
 SBWALTnparafulllinear<-lm(npara~Peak*SBWALT*Plot,data=nparaSBWALT)
 nparaSBWALT$resid<-NA
 nparaSBWALT$resid<-SBWALTnparafulllinear$residuals
@@ -1014,7 +1015,7 @@ nparaSBWALT%>%
 SBWALTnparaautocorrremlGLS<-Gls(npara~dummyPeak+SBWALT+Plot+dummyPeak:SBWALT+dummyPeak:Plot,correlation=corAR1(form=~dummyPeak|Plot/SBWALT),data=nparaSBWALT, method="REML") #using the function Gls because allows Predict function needed to plot trendline
 nparapredict<-Predict(SBWALTnparaautocorrremlGLS, dummyPeak=c(1:14), Plot=seq(from=1,to=3,by=1),SBWALT=c("ALT","SBW"))%>%
   mutate(label=as.factor(ifelse(SBWALT=="SBW", "spruce budworm","other caterpillars")),Peak=dummyPeak-4,Plot=as.factor(Plot))
-  
+
 nparaSBWALTpredict<-left_join(nparaSBWALT,nparapredict,by=c("Plot", "Peak", "SBWALT", "label"))
 
 nparaSBWALTplot<-ggplot(nparaSBWALTpredict)+
@@ -1112,11 +1113,9 @@ numinteractionsspecies<-interaction%>%
   summarise(numinter=length(SpecID.high))%>%
   arrange(desc(numinter))
 
-library(scales)
+
 show_col(viridis_pal(option="A")(25))
 
 # Notes -------------------------------------------------------------------
 
 #Wintemia fumiferana (Smidtia fumiferana), a major parasitoid of spruce budworm was not included in the shared parasitoid list of parasitoids because found to interact with undetermined herbivores once and with no other other caterpillars (but found to interact with spruce budworm  1241 times) . undetermined herbivores were removed from dataset to follow Eveleigh et al. 2007 SI Methods.
-
-
