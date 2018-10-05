@@ -1,5 +1,5 @@
 #############################################################################
-#            Coherent changes in species interactions in response to outbreaking spruce budworm
+#            Coherent whole food web responses to outbreaking spruce budworm
 #
 #     Christopher J. Greyson-Gaito, Kevin S. McCann, Jochen Fruend, Christopher J. Lucarotti, M. Alex Smith, Eldon S. Eveleigh
 #
