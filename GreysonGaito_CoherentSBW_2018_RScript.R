@@ -49,20 +49,8 @@ library(stargazer)
 
 # Data Preparation -----
 ##Input data as data.table
-interactionimport<-read_csv("data/InteractFinal_long_2014Nov10.csv") #can use read_csv and will change duo to NA but still 300 parsing failures in other columns (not important columns for this analysis)
-speciesnamesimport<-read_csv("data/TotalSpeciesTable_2014Nov10.csv")
-
-##Data cleaning
-interaction<-interactionimport%>%
-  mutate(Plot=as.factor(Plot))%>%
-  filter(!Plot==4)%>%
-  filter(CrownLevel=="mid") %>% #using mid crown because royama 2017 used mid crown and because eveleigh and johns 2014 found that using mid crown samples are the best proxies for estimating budworm and parasitoid densities
-  filter(!SpecID.low=="h11")%>% #remove sawfly from dataset
-  filter(!SpecID.low=="h00")%>% #remove undetermined herbivores from dataset (so similar to Eveleigh 2007 SI Materials and Methods)
-  filter(!SpecID.high %in% c("pA3", "p40","p05", "p07","p04", "p51"))%>% #remove all unresolved taxa #remove diadegma sp. that has freq.low of 2 and uncertain as to the species (either D. pulicalivariae-p94 or Diadegma sp1-p95)
-  mutate(Plot=droplevels(Plot))%>%
-  mutate(Peak=ifelse(Plot=="3",Year-6,Year))%>% 
-  mutate(Peak=Peak-85) #plot 1 and 2 peaked in 85 and plot 3 peaked in 91. Therefore created new variable Peak to standardize the different plots by when they peak
+interaction<-read_csv("data/SpruceBudworm_OtherCaterpillars_BalsamFir_FoodWeb_EldonEveleigh.csv") %>%
+  mutate(Plot = as.factor(Plot))
 
   parashareprep<-interaction%>%
   filter(!grepl("p",SpecID.low))%>%
@@ -79,6 +67,11 @@ interaction<-interactionimport%>%
   bind_rows #produces a list of unique parasitoid taxa that attacked budworm and other caterpillars
 
 parashare<-parashareprep$UnSP[duplicated(parashareprep$UnSP)] #produces a list of the parasitoids that attack both budworm and other caterpillars
+
+speciesnamesshare <- interaction %>%
+  select(SpecID.high, LatinName) %>%
+  filter(SpecID.high %in% parashare) %>%
+  unique()
 
 create.numSBWALTnparaprep<-function(plot){
   x<-data.frame(expand.grid(c(-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10),c("SBW","ALT")))%>%
@@ -99,38 +92,14 @@ numSBWALTnparaprep<-c(1,2,3)%>%
   bind_rows()%>%
   mutate(Plot=as.factor(Plot)) #combined with the function create.numSBWALTnparaprep this creates a dataframe with all combinations of Peak (-3 to 10), SBWALT (either SBW or ALT), and Plot (1,2,3) to be ensure all data sets used in analyses have all combinations
 
-speciesnamesshare<-speciesnamesimport%>%
-  select(speciesID,origName, Genus, Species)%>%
-  filter(grepl("p",speciesID))%>%
-  filter(speciesID %in% parashare)%>%
-  unite(LatinName, Genus,Species,sep=" ",remove=TRUE)%>%
-  rename(SpecID.high=speciesID)%>%
-  mutate(LatinName=ifelse(grepl("NA",LatinName),origName,LatinName))%>%
-  select(-origName)
-
-speciesnamesshare$LatinName<-gsub("Winthemia","Smidtia", speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("setifacies","fumipennis", speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("Ephialtes","Apechthis", speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("Phaeogenes","Dirophanes", speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("Macrocentrus","Macrocentrus linearis iridescens", speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("microgaster","Microgaster", speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("Glypta sp1","Glypta sp.", speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("Orgilis","Orgilus", speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("Synetaeris","Tranosema",speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("cf. ","",speciesnamesshare$LatinName)
-speciesnamesshare$LatinName<-gsub("sp1","sp.",speciesnamesshare$LatinName)
-
-#From speciesnamesshare<- to here, this section creates a list of the latin names of all the parasitoids that attack both budworm and other caterpillars and corrects the latin names if necessary.
-
 propSBWALTbyspeciesdata<-interaction%>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   mutate(SBWALT=ifelse(SpecID.low=="h01","SBW","ALT"))%>%
   group_by(SpecID.high)%>%
   summarise(Tot=length(SpecID.high), NSBW=length(SpecID.high[SBWALT=="SBW"]),NALT=length(SpecID.high[SBWALT=="ALT"]))%>%
   mutate(PropSBW=NSBW/Tot)%>%
   mutate(stanerror=sqrt(PropSBW*(1-PropSBW)/Tot), pymax=PropSBW+stanerror, pymin=PropSBW-stanerror)%>% #calculate standard error of the proportion
-  merge(speciesnamesshare,by="SpecID.high",all.x=TRUE)%>%
+  left_join(speciesnamesshare,by="SpecID.high") %>%
   select(-SpecID.high)%>%
   rename(SpecID.high=LatinName)%>%
   mutate(SpecID.high=as.factor(SpecID.high)) #This section produces a dataset of the Proportion of emergences from budworm for each parasitoid taxon. also gives the proportion standard error and error bars for the standard error.
@@ -145,7 +114,6 @@ speciesnamesprep<-tibble(
 #Parasitoid taxa diversity -----
 
 nparaSBWALT<-interaction%>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   mutate(SBWALT=as.factor(ifelse(SpecID.low=="h01","SBW","ALT")))%>%
   group_by(Peak,Plot, SBWALT)%>%
@@ -274,14 +242,12 @@ ggsave("figs/nparaSBWALTplot.pdf",plot=nparaSBWALTplot,width=8,height=7) #Figure
 #community level plotting of diet switching using log10 ratios of emergences from budworm and other caterpillars and log10 ratios of total abundances of budworm and other caterpillars
 
 ratioSBWbypeakplot<-interaction%>%
-  filter(grepl("h",SpecID.low))%>%
   mutate(SBWALT=ifelse(SpecID.low=="h01","SBW","ALT"))%>%
   group_by(Peak, Plot)%>%
   summarise(TotSBW=length(SBWALT[SBWALT=="SBW"]),TotALT=length(SBWALT[SBWALT=="ALT"]))%>%
   mutate(ratioSBWpeakplot=TotSBW/TotALT, logratioSBWpeakplot=log10(ratioSBWpeakplot)) #produces a dataset of the ratio (and log 10 ratio) of the total number of budworm and other caterpillars sampled on balsam fir
 
 ratioSBWparacommunity<-interaction %>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   mutate(SBWALT=ifelse(SpecID.low=="h01","SBW","ALT"))%>%
   group_by(Peak, Plot)%>%
@@ -440,7 +406,6 @@ pcapprep <- ratioSBWbypeakplot %>%
   gather(SBWALT,Tot,-Peak,-Plot)
 
 SBWALTEM<-interaction%>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   mutate(SBWALT=ifelse(SpecID.low=="h01","SBW","ALT"))%>%
   group_by(Peak,Plot)%>%
@@ -559,7 +524,6 @@ ggsave("figs/SBWALTEMplot.pdf",plot=SBWALTEMplot,width=8,height=7) #figure 2b
 
 # Aggregate response-----------------------------------------------------------
 numinteractionsspecies<-interaction%>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   group_by(SpecID.high)%>%
   summarise(numinter=length(SpecID.high))%>%
@@ -569,7 +533,6 @@ paralist<-numinteractionsspecies$SpecID.high
 
 drop_top3_sp <- function(x){
 communitydietswitchlog_dropsp<-interaction%>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   mutate(SBWALT=ifelse(SpecID.low=="h01","SBW","ALT"))%>%
   filter(!SpecID.high %in% x)%>%
@@ -698,13 +661,11 @@ ggsave("figs/communitydietswitchlogratio_p03.pdf", plot=communitydietswitchlog_p
 
 #nMDS analysis of parasitoid community over time
 turnoverprep<-interaction%>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   group_by(Peak,Plot)%>%
   summarise(Totemerge=length(SpecID.high))#creates a dataframe of the total emergences of all parasitoid taxa combined for each peak and plot (used to standardise the number of emergences per taxon by the total number of emergences because different years had different total number of emergences)
 
 turnover<-interaction%>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   group_by(Peak,Plot, SpecID.high)%>%
   summarise(nemerge=length(SpecID.high))%>%
@@ -819,16 +780,16 @@ print(pval <- sum(pop >= pop[1]) / (B + 1))
 # Topology and per capita interaction strengths---------
 
 
-speciesnamesprepbi<-speciesnamesshare%>%
+speciesnamesprepbi<-speciesnamesshare %>%
   rename(dataID=SpecID.high,SpecID.high=LatinName)%>%
-  right_join(speciesnamesprep,by="SpecID.high")%>%
+  mutate(SpecID.high=as.factor(SpecID.high))%>%
+  left_join(speciesnamesprep,by="SpecID.high")%>%
   select(-SpecID.high)%>%
   rename(SpecID.high=dataID,SpecID.highnum=numID) # creates a dataframe that includes the parasitoid code from data collection and the corresponding number for the figure.
 
 bipartitegraphSBWALT<-interaction%>%
   mutate(Peak=as.character(Peak))%>%
   mutate(Peak=gsub("-","minus",Peak))%>%
-  filter(grepl("h",SpecID.low))%>%
   filter(SpecID.high %in% parashare)%>%
   left_join(speciesnamesprepbi,by="SpecID.high")%>%
   mutate(SBWALT=ifelse(SpecID.low=="h01","SBW","ALT"))%>%
@@ -967,7 +928,7 @@ ggsave("figs/intdistplot.pdf",intdistplot,width=8,height=7) #Figure 5
 
 # Supplementary Information -----------------------------------------------
 
-###Linear mixed effects model of log10 ratio per capita parasitoid emergence from budworm and other caterpillars to the log10 ratio of total budworm to other caterpillars. Using the diet switching method outlined by Greenwood, J. J. D., and R. A. Elton. 1979. Analysing experiments on frequency-dependent selection by predators. The Journal of Animal Ecology 48:721.
+###Linear mixed effects model of log10 ratio PER CAPITA parasitoid emergence from budworm and other caterpillars to the log10 ratio of total budworm to other caterpillars. Using the diet switching method outlined by Greenwood, J. J. D., and R. A. Elton. 1979. Analysing experiments on frequency-dependent selection by predators. The Journal of Animal Ecology 48:721.
 
 #All of the statistical analysis below follows the protocol outlined in Zuur, A., E. N. Ieno, N. Walker, A. A. Saveliev, and G. M. Smith. 2009. Mixed effects models and extensions in ecology with r. First edition. Springer-Verlag New York, New York, New York, United States of America.
 
