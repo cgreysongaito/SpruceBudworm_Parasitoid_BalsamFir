@@ -11,6 +11,6 @@ Christopher J. Greyson-Gaito, Kevin S. McCann, Jochen Fruend, Christopher J. Luc
 
 R script containing statistical analysis and figure creation for the manuscript *Coherent whole food web responses to outbreaking spruce budworm*.
 
-Data for this manuscript will be uploaded to Dryad prior to publication of this manuscript.
+If/when the manuscript is accepted, the data will be published publically on Dryad at https://doi.org/10.5061/dryad.d7k712j (data is presently available to journal editors and reviewers).
 
 
