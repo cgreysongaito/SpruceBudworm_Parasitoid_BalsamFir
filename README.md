@@ -13,7 +13,7 @@ Christopher J. Greyson-Gaito<sup>*1</sup>, Kevin S. McCann<sup>1</sup>, Jochen F
 3. Natural Resources Canada, Canadian Forest Service, Atlantic Foresty Centre, Fredericton, New Brunswick, Canada
 4. Population Ecology Group, Faculty of Forestry and Environmental Management, University of New Brunswick, Fredericton, New Brunswick, Canada
 
-##ORCID
+## ORCID
 CJGG &ndash; 0000-0001-8716-0290
 KSM &ndash; 0000-0001-6031-7913
 JF &ndash; 0000-0002-7079-3478
@@ -23,7 +23,7 @@ ESE &ndash; 0000-0001-5060-8565
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1305399.svg)](https://doi.org/10.5281/zenodo.1305399)
 
-R script containing statistical analysis/figure creation and dataset for the manuscript *Parasitoid community responds indiscriminately to fluctuating spruce budworm and other caterpillars on balsam fir*.
+## R script containing statistical analysis/figure creation and dataset.
 
 ### Instructions
 
@@ -38,11 +38,17 @@ Then change your working directory to this folder. You will need to change the p
 
 ### Folder and file structure
 *data
+
 	*SpruceBudworm_OtherCaterpillars_BalsamFir_FoodWeb_EldonEveleigh.csv &ndash; dataset
+
 *figs &ndash; folder to place figures when created
+
 *Indiscriminate_SBW_GreysonGaitoetal2020_RScript.R &ndash; R script with statistical analyses and figure creation
+
 *LICENSE.txt &ndash; CC by 4.0 License for this repository
+
 *README.md &ndash; Readme file
+
 *SpruceBudworm_Parasitoid_BalsamFir.Rproj &ndash; Opens R project
 
 
