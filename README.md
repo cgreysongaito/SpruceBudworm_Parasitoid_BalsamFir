@@ -9,7 +9,7 @@ Christopher J. Greyson-Gaito<sup>*1</sup>, Kevin S. McCann<sup>1</sup>, Jochen F
 *Corresponding author - christopher@greyson-gaito.com
 
 1. Department of Integrative Biology, University of Guelph, Guelph, ON, Canada
-2. Department of Biometry and Enviornmental System Analysis, Albert-Ludwigs-Universit$auml;t Freiburg, Freiburg, Germany
+2. Department of Biometry and Enviornmental System Analysis, Albert-Ludwigs-Universit&auml;t Freiburg, Freiburg, Germany
 3. Natural Resources Canada, Canadian Forest Service, Atlantic Foresty Centre, Fredericton, New Brunswick, Canada
 4. Population Ecology Group, Faculty of Forestry and Environmental Management, University of New Brunswick, Fredericton, New Brunswick, Canada
 
