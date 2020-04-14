@@ -14,16 +14,16 @@ Christopher J. Greyson-Gaito<sup>*1</sup>, Kevin S. McCann<sup>1</sup>, Jochen F
 4. Population Ecology Group, Faculty of Forestry and Environmental Management, University of New Brunswick, Fredericton, New Brunswick, Canada
 
 ## ORCID
-CJGG &ndash; 0000-0001-8716-0290
-KSM &ndash; 0000-0001-6031-7913
-JF &ndash; 0000-0002-7079-3478
-CJL &ndash; 0000-0002-3490-568X
-MAS &ndash; 0000-0002-8650-2575
-ESE &ndash; 0000-0001-5060-8565
+* CJGG &ndash; 0000-0001-8716-0290
+* KSM &ndash; 0000-0001-6031-7913
+* JF &ndash; 0000-0002-7079-3478
+* CJL &ndash; 0000-0002-3490-568X
+* MAS &ndash; 0000-0002-8650-2575
+* ESE &ndash; 0000-0001-5060-8565
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1305399.svg)](https://doi.org/10.5281/zenodo.1305399)
 
-## R script containing statistical analysis/figure creation and dataset.
+## Dataset and  R script containing statistical analysis/figure creation.
 
 ### Instructions
 
@@ -37,19 +37,14 @@ If you do not use RStudio, open the R file Indiscriminate_SBW_GreysonGaitoetal20
 Then change your working directory to this folder. You will need to change the paths to the dataset and the figures in the R script.
 
 ### Folder and file structure
-*data
 
-	*SpruceBudworm_OtherCaterpillars_BalsamFir_FoodWeb_EldonEveleigh.csv &ndash; dataset
-
-*figs &ndash; folder to place figures when created
-
-*Indiscriminate_SBW_GreysonGaitoetal2020_RScript.R &ndash; R script with statistical analyses and figure creation
-
-*LICENSE.txt &ndash; CC by 4.0 License for this repository
-
-*README.md &ndash; Readme file
-
-*SpruceBudworm_Parasitoid_BalsamFir.Rproj &ndash; Opens R project
+* data
+    * SpruceBudworm_OtherCaterpillars_BalsamFir_FoodWeb_EldonEveleigh.csv &ndash; dataset
+* figs &ndash; folder to place figures when created
+* Indiscriminate_SBW_GreysonGaitoetal2020_RScript.R &ndash; R script with statistical analyses and figure creation
+* LICENSE.txt &ndash; CC by 4.0 License for this repository
+* README.md &ndash; Readme file
+* SpruceBudworm_Parasitoid_BalsamFir.Rproj &ndash; Opens R project
 
 
 
