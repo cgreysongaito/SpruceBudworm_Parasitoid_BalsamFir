@@ -41,6 +41,7 @@ Then change your working directory to this folder. You will need to change the p
 * data
     * SpruceBudworm_OtherCaterpillars_BalsamFir_FoodWeb_EldonEveleigh.csv &ndash; dataset
 * figs &ndash; folder to place figures when created
+* .gitignore &ndash; file containing files and folders that git should ignore
 * Indiscriminate_SBW_GreysonGaitoetal2020_RScript.R &ndash; R script with statistical analyses and figure creation
 * LICENSE.txt &ndash; CC by 4.0 License for this repository
 * README.md &ndash; Readme file
