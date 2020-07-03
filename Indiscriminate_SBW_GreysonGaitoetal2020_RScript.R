@@ -249,21 +249,26 @@ SBWALTdietswitchremlGLS<-Gls(logratioSBWEmerge~logratioSBWpeakplot*Plot,data=com
 dietswitchpredict<-Predict(SBWALTdietswitchremlGLS, logratioSBWpeakplot=seq(from=-1.5,to=2.1,by=0.1),Plot=seq(from=1,to=3,by=1))%>%
   mutate(Plot=as.factor(Plot))
 
-comswitchlogratioplot<-ggplot(communitydietswitch,aes(logratioSBWpeakplot, logratioSBWEmerge))+
-  geom_abline(intercept=0,slope=1,linetype="twodash")+
+comswitchlogratioplot<-ggplot()+
+  geom_abline(intercept=0,slope=1,linetype="dotdash")+
   geom_abline(intercept=0,slope=0)+
   geom_vline(xintercept=0)+
-  geom_line(data=dietswitchpredict,aes(logratioSBWpeakplot,yhat,linetype=Plot),size=2)+
-  geom_point(aes(shape=Plot, colour=bpae),size=5)+
+  geom_ribbon(data=filter(dietswitchpredict, Plot==3), aes(x=logratioSBWpeakplot, ymin=lower, ymax=upper), linetype = 1, size=0.05, alpha=0.3, color = "black")+
+  geom_ribbon(data=filter(dietswitchpredict, Plot==2), aes(x=logratioSBWpeakplot, ymin=lower, ymax=upper), linetype = 1, size=0.05, alpha=0.2, color = "black")+
+  geom_ribbon(data=filter(dietswitchpredict, Plot==1), aes(x=logratioSBWpeakplot, ymin=lower, ymax=upper), linetype = 1, size=0.05, alpha=0.1, color = "black")+
+  geom_line(data=dietswitchpredict, aes(logratioSBWpeakplot,yhat,linetype=Plot),size=1.5)+
+  geom_point(data = communitydietswitch, aes(logratioSBWpeakplot, logratioSBWEmerge, shape=Plot, colour=bpae),size=5)+
   theme(axis.title.y=element_text(hjust=0.5, vjust=1.5), 
         legend.text=element_text(size=14),legend.justification=c(1,0), legend.position=c(0.98,0.05),legend.box = "horizontal")+
   coord_fixed(ratio = 1)+
-  scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_viridis(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), alpha = 1, begin = 0, end = 1, direction = 1, discrete = TRUE, option = "D")+
+    scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("solid","dashed","dotted"))+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+
   ylab("Log10 emergence \nbudworm:other caterpillars")+xlab("Log10 abundance \nbudworm:other caterpillars")
+
 
 ggsave("figs/communitydietswitchlogratio.pdf", plot=comswitchlogratioplot, width=8,height=8) #Figure 1
 
-# Aggregate response-----------------------------------------------------------
+# Underlysing causes of parasitoid community host preference
+
 numinteractionsspecies<-interaction%>%
   filter(SpecID.high %in% paraSBW)%>%
   group_by(SpecID.high)%>%
@@ -365,18 +370,18 @@ turnovercommatfin[is.na(turnovercommatfin)]<-0#replaces any NA values with 0. th
 
 dimcheckMDS(turnovercommatfin, distance = "bray", k = 6, trymax = 30, autotransform=TRUE) #after exmining screeplot from 6 dimensions to 1 dimension, chosen to use 2 dimensions because additional dimensions provide small reductions in stress
 
+set.seed(1223)
 turnoverNMDS <- metaMDS(turnovercommatfin, distance = "bray", k = 2, trymax = 100, autotransform=TRUE)
 
 stressplot(turnoverNMDS)  ##to test if distances as represented in ordination are correlated with actual distances
 
-stress10<-c(0.08808512,0.08462872,0.08476356,0.08646763,0.0847633,0.08686875,0.09244133,0.1214903,0.08696679,0.08688915)
+stress10<-c(0.0868891,0.1270212,0.08939534,0.08462844,0.1265077,0.08547444,0.09038554,0.08890437,0.1225755,0.1265186)
 sd(stress10)
 
 #Create nMDS plot
 turnoverdatascores<-as.data.frame(scores(turnoverNMDS))
 turnoverdatascores$Plot<-factors$Plot
 turnoverdatascores$bpae<-factors$bpae
-turnoverdatascores$abunSBW<-factors$abunSBW
 
 # function for creating ellipses in nmds plot
 #adapted from  http://stackoverflow.com/questions/13794419/plotting-ordiellipse-function-from-vegan-package-onto-nmds-plot-created-in-ggplo
@@ -408,7 +413,7 @@ turnoverNMDSplot<-ggplot(turnoverdatascores)+
         legend.justification=c(1,0.99), 
         legend.position=c(1,0.99),
         legend.box = "horizontal")+
-  coord_fixed(ratio = 1)+scale_color_viridis(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), alpha = 1, begin = 0, end = 1, direction = 1, discrete = TRUE, option = "D")+scale_shape_manual(values=c(16,17,15))+scale_x_continuous(breaks=c(-1,0,1))
+  coord_fixed(ratio = 1)+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+scale_shape_manual(values=c(16,17,15))+scale_x_continuous(breaks=c(-1,0,1))
 
 ggsave("figs/nmdsturnover.pdf",plot=turnoverNMDSplot,width=10,height=10) #Figure 2
 
@@ -586,7 +591,7 @@ intdistplot<-ggplot(intdistall)+
         legend.title=element_text(size=15),
         legend.justification=c(0,1),
         legend.position=c(0.01,0.99))+
-  scale_color_manual(name="caterpillar type", breaks=c("SBW","ALT"),labels=c("budworm","other caterpillars"), values=c("#C73D73FF","#2D1160FF"))+
+    scale_color_manual(name="caterpillar type", breaks=c("SBW","ALT"),labels=c("budworm","other caterpillars"), values=c("#FA7876FF", "#C73D73FF"))+ 
     scale_x_continuous(breaks=c(-2,0,2,4,6,8,10))+scale_shape_manual(values=c(16,17,15))
 
 ggsave("figs/intdistplot.pdf",intdistplot,width=8,height=7) #Figure 4
@@ -618,7 +623,7 @@ communitydietswitchlog_p01<-interaction%>%
   theme(axis.title.y=element_text(hjust=0.5, vjust=1.5), 
         legend.text=element_text(size=14),legend.justification=c(1,0), legend.position=c(0.32,0.7),legend.box = "horizontal")+
   coord_fixed(ratio = 1)+
-  scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_viridis(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), alpha = 1, begin = 0, end = 1, direction = 1, discrete = TRUE, option = "D")+
+  scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+
   ylab("Log10 emergence \nbudworm:other caterpillars")+xlab("Log10 abundance \nbudworm:other caterpillars")
 
 ggsave("figs/communitydietswitchlogratio_p01.pdf", plot=communitydietswitchlog_p01, width=8,height=8) #Supplementary Figure
@@ -647,7 +652,7 @@ communitydietswitchlog_p02<-interaction%>%
   theme(axis.title.y=element_text(hjust=0.5, vjust=1.5), 
         legend.text=element_text(size=14),legend.justification=c(1,0), legend.position=c(0.32,0.7),legend.box = "horizontal")+
   coord_fixed(ratio = 1)+
-  scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_viridis(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), alpha = 1, begin = 0, end = 1, direction = 1, discrete = TRUE, option = "D")+
+  scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+
   ylab("Log10 emergence \nbudworm:other caterpillars")+xlab("Log10 abundance \nbudworm:other caterpillars")
 
 ggsave("figs/communitydietswitchlogratio_p02.pdf", plot=communitydietswitchlog_p02, width=8,height=8) #Supplementary Figure
@@ -674,7 +679,7 @@ communitydietswitchlog_p08<-interaction%>%
   theme(axis.title.y=element_text(hjust=0.5, vjust=1.5), 
         legend.text=element_text(size=14),legend.justification=c(1,0), legend.position=c(0.32,0.7),legend.box = "horizontal")+
   coord_fixed(ratio = 1)+
-  scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_viridis(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), alpha = 1, begin = 0, end = 1, direction = 1, discrete = TRUE, option = "D")+
+  scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+
   ylab("Log10 emergence from budworm")+xlab("Log10 abundance \nbudworm:other caterpillars")
 
 ggsave("figs/communitydietswitchlogratio_p08.pdf", plot=communitydietswitchlog_p08, width=8,height=8) #Supplementary Figure
@@ -927,7 +932,33 @@ comswitchlogratiopcapplot<-ggplot(communitydietswitch,aes(logratioSBWpeakplot, l
   ylab("Log10 per capita emergence \nbudworm:other caterpillars")+xlab("Log10 abundance \nbudworm:other caterpillars")
 
 ggsave("figs/communitydietswitchlogratiopcap.pdf", plot=comswitchlogratioplotpcap, width=8,height=8)
-  
+
+## Calculate abundances of budworm and other caterpillars (mean and range). Used near end of caterpillar and parasitoid sampling section
+SBWmeanvar<-interaction %>%
+  filter(SpecID.low=="h01") %>%
+  group_by(Peak, Plot) %>%
+  summarise(TotSBW = length(SpecID.low)) %>%
+  ungroup()
+
+mean(SBWmeanvar$TotSBW)
+min(SBWmeanvar$TotSBW)
+max(SBWmeanvar$TotSBW)
+
+ALTmeanvar<-interaction %>%
+  filter(!SpecID.low=="h01") %>%
+  group_by(Peak, Plot) %>%
+  summarise(TotALT = length(SpecID.low)) %>%
+  ungroup() 
+
+mean(ALTmeanvar$TotALT)
+min(ALTmeanvar$TotALT)
+max(ALTmeanvar$TotALT)
+
+# Reason why using three parasitoid taxa (used in second paragraph of Parasitoid community host preference section of Methods)
+threepara <- numSBWALTbyspeciesdata %>%
+  mutate(totemer = NSBW + NALT)
+
+sum(threepara$totemer)
   # Notes -------------------------------------------------------------------
 
 # Undetermined herbivores were removed from dataset to follow Eveleigh et al. 2007 SI Methods.
