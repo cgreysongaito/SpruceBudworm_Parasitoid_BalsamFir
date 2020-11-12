@@ -218,31 +218,6 @@ SBWALTdietswitchreml<-gls(logratioSBWEmerge~logratioSBWpeakplot*Plot,data=commun
 
 summary(SBWALTdietswitchreml)
 
-# average intercept for all plots
-avinterceptallplotsDS<-(((3*coef(SBWALTdietswitchreml)[1])+coef(SBWALTdietswitchreml)[3]+coef(SBWALTdietswitchreml)[4])/3)
-
-# average standard error of intercepts for all plots
-avSEinterceptallplotsDS <- ((summary(SBWALTdietswitchreml)$tTable[1,2]+summary(SBWALTdietswitchreml)$tTable[3,2]+summary(SBWALTdietswitchreml)$tTable[4,2])/3)
-
-#confidence intervals for average intercept
-avSEinterceptallplotsDS*1.96
-
-#Test of whether the average intercept of all plots is different from 0 (test of caterpillar type discrimination)
-2*pt(abs((avinterceptallplotsDS-0)/avSEinterceptallplotsDS),df=SBWALTdietswitchreml$dims[[1]]-SBWALTdietswitchreml$dims[[2]],lower.tail = FALSE) #p>0.05 so intercept is  not significantly different from 0
-
-
-#average slope for all plots
-avslopeallplotsDS<-(((3*coef(SBWALTdietswitchreml)[2])+coef(SBWALTdietswitchreml)[5]+coef(SBWALTdietswitchreml)[6])/3)
-  
-#average standard error of slopes for all plots
-avSEslopeallplotsDS<-((summary(SBWALTdietswitchreml)$tTable[2,2]+summary(SBWALTdietswitchreml)$tTable[5,2]+summary(SBWALTdietswitchreml)$tTable[6,2])/3)
-
-#confidence intervals for average slope
-avSEslopeallplotsDS*1.96
-
-#Test of whether the average slope of all plots is different from 1 (test of resource tracking)
-2*pt(abs((avslopeallplotsDS-1)/avSEslopeallplotsDS),df=SBWALTdietswitchreml$dims[[1]]-SBWALTdietswitchreml$dims[[2]],lower.tail = FALSE) #p<0.05 so b is significantly different from 0
-
 #Create graph of log10 ratio parasitoid emergence from budworm and other caterpillars to the log10 ratio of total budworm to other caterpillars
 SBWALTdietswitchremlGLS<-Gls(logratioSBWEmerge~logratioSBWpeakplot*Plot,data=communitydietswitch, method="REML") #using the function Gls because allows Predict function needed to plot trendline
 
@@ -262,10 +237,30 @@ comswitchlogratioplot<-ggplot()+
         legend.text=element_text(size=14),legend.justification=c(1,0), legend.position=c(0.98,0.05),legend.box = "horizontal")+
   coord_fixed(ratio = 1)+
     scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("solid","dashed","dotted"))+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+
-  ylab("Log10 emergence \nbudworm:other caterpillars")+xlab("Log10 abundance \nbudworm:other caterpillars")
+  ylab("Relative Budworm Utilization")+xlab("Relative Budworm Frequency")
 
 
 ggsave("figs/communitydietswitchlogratio.pdf", plot=comswitchlogratioplot, width=8,height=8) #Figure 1
+
+# Test slope and intercept for each plot
+plot1 <- lm(logratioSBWEmerge~logratioSBWpeakplot, data = filter(communitydietswitch, Plot == "1"))
+plot1_slopet <- (coef(summary(plot1))[2,1]-1)/coef(summary(plot1))[2,2]
+2*pt(abs(plot1_slopet),df=5,lower.tail = FALSE)
+slope_plot1_allsp <- coef(summary(plot1))[2,1]
+int_plot1_allsp <- coef(summary(plot1))[1,1]
+
+plot2 <- lm(logratioSBWEmerge~logratioSBWpeakplot, data = filter(communitydietswitch, Plot == "2"))
+plot2_slopet <- (coef(summary(plot2))[2,1]-1)/coef(summary(plot2))[2,2]
+2*pt(abs(plot2_slopet),df=5,lower.tail = FALSE)
+slope_plot2_allsp <- coef(summary(plot2))[2,1]
+int_plot2_allsp <- coef(summary(plot2))[1,1]
+
+plot3 <- lm(logratioSBWEmerge~logratioSBWpeakplot, data = filter(communitydietswitch, Plot == "3"))
+plot3_slopet <- (coef(summary(plot3))[2,1]-1)/coef(summary(plot3))[2,2]
+2*pt(abs(plot3_slopet),df=5,lower.tail = FALSE)
+slope_plot3_allsp <- coef(summary(plot3))[2,1]
+int_plot3_allsp <- coef(summary(plot3))[1,1]
+
 
 # Underlysing causes of parasitoid community host preference
 
@@ -277,7 +272,24 @@ numinteractionsspecies<-interaction%>%
 
 paralist<-numinteractionsspecies$SpecID.high
 
-#The following code removes in turn the parastiod taxa that emerged the most from budworm and other caterpillars, the two taxa that emerged the most, and the three taxa that emerged the most. For each of these subsets of data, the same model as above (parasitoid community host preference) is ran and slops and intercepts calculated.
+#The following code removes in turn the parastiod taxa that emerged the most from budworm and other caterpillars, the two taxa that emerged the most, and the three taxa that emerged the most. For each of these subsets of data, the same model as above (parasitoid community host preference) is ran and slops and intercepts calculated for each plot.
+
+slope_tval_plot <- function(plot, origslope){
+  (coef(summary(plot))[2,1]-origslope)/coef(summary(plot))[2,2]
+}
+
+int_tval_plot <- function(plot, origint){
+  (coef(summary(plot))[1,1]-origint)/coef(summary(plot))[1,2]
+}
+
+slope_pval_plot <- function(plot, origslope){
+  2*pt(abs(slope_tval_plot(plot, origslope)),df=5,lower.tail = FALSE)
+}
+
+int_pval_plot <- function(plot, origint){
+  2*pt(abs(int_tval_plot(plot, origint)),df=5,lower.tail = FALSE)
+}
+
 drop_top3_sp <- function(x){
   communitydietswitchlog_dropsp<-interaction%>%
     filter(SpecID.high %in% paraSBW)%>%
@@ -290,45 +302,25 @@ drop_top3_sp <- function(x){
     filter(TotSBW!=0,TotALT!=0,TotSBWEmerge!=0,TotALTEmerge!=0)%>%
     mutate(dummyPeak=Peak+4)
 
-  SBWALTdietswitchreml_dropsp<-gls(logratioSBWEmerge~logratioSBWpeakplot*Plot,data=communitydietswitchlog_dropsp,method="REML")
+    plot1dropsp <- lm(logratioSBWEmerge~logratioSBWpeakplot, data = filter(communitydietswitchlog_dropsp, Plot == "1"))
+    plot2dropsp <- lm(logratioSBWEmerge~logratioSBWpeakplot, data = filter(communitydietswitchlog_dropsp, Plot == "2"))
+    plot3dropsp <- lm(logratioSBWEmerge~logratioSBWpeakplot, data = filter(communitydietswitchlog_dropsp, Plot == "3"))
 
-  avinterceptallplotsDS_dropsp<-(((3*coef(SBWALTdietswitchreml_dropsp)[1])+coef(SBWALTdietswitchreml_dropsp)[3]+coef(SBWALTdietswitchreml_dropsp)[4])/3)
-
-  avSEinterceptallplotsDS_dropsp <- ((summary(SBWALTdietswitchreml_dropsp)$tTable[1,2]+summary(SBWALTdietswitchreml_dropsp)$tTable[3,2]+summary(SBWALTdietswitchreml_dropsp)$tTable[4,2])/3)
-
-  avslopeallplotsDS_dropsp<-(((3*coef(SBWALTdietswitchreml_dropsp)[2])+coef(SBWALTdietswitchreml_dropsp)[5]+coef(SBWALTdietswitchreml_dropsp)[6])/3)
-
-  avSEslopeallplotsDS_dropsp<-((summary(SBWALTdietswitchreml_dropsp)$tTable[2,2]+summary(SBWALTdietswitchreml_dropsp)$tTable[5,2]+summary(SBWALTdietswitchreml_dropsp)$tTable[6,2])/3)
-
-
-  bt<- (avslopeallplotsDS_dropsp-avslopeallplotsDS)/avSEslopeallplotsDS_dropsp
-
-  it<-(avinterceptallplotsDS_dropsp-avinterceptallplotsDS)/avSEinterceptallplotsDS_dropsp
-
-  ttable<-tibble(
-    speciesdrop=paste(x,collapse=" "),
-    origbeta=avslopeallplotsDS,
-    beta=avslopeallplotsDS_dropsp,
-    diffbeta=1-beta/origbeta,
-    binterval=avSEslopeallplotsDS_dropsp*1.96,
-    btstat=bt,
-    bdf=SBWALTdietswitchreml_dropsp$dims[[1]]-SBWALTdietswitchreml_dropsp$dims[[2]],
-    bp=pt(abs(bt),df=SBWALTdietswitchreml_dropsp$dims[[1]]-SBWALTdietswitchreml_dropsp$dims[[2]],lower.tail = FALSE),
-    bp2=2*bp,
-    origint=avinterceptallplotsDS,
-    int=avinterceptallplotsDS_dropsp,
-    diffint=1-int/origint,
-    iinterval=avSEinterceptallplotsDS_dropsp*1.96,
-    itstat=it,
-    idf=SBWALTdietswitchreml_dropsp$dims[[1]]-SBWALTdietswitchreml_dropsp$dims[[2]],
-    ip=pt(abs(it),df=SBWALTdietswitchreml_dropsp$dims[[1]]-SBWALTdietswitchreml_dropsp$dims[[2]],lower.tail = FALSE),
-    ip2=2*ip
+  ttable <-tibble(
+    speciesdrop = rep(paste(x,collapse=" "), times=3),
+    plot = c("Plot 1", "Plot 2", "Plot 3"),
+    slope = c(coef(summary(plot1dropsp))[2,1], coef(summary(plot2dropsp))[2,1], coef(summary(plot3dropsp))[2,1]),
+    slopet = c(slope_tval_plot(plot1dropsp, slope_plot1_allsp), slope_tval_plot(plot2dropsp, slope_plot2_allsp), slope_tval_plot(plot3dropsp, slope_plot3_allsp)),
+    slopep = c(slope_pval_plot(plot1dropsp, slope_plot1_allsp), slope_pval_plot(plot2dropsp, slope_plot1_allsp), slope_pval_plot(plot3dropsp, slope_plot1_allsp)),
+    int = c(coef(summary(plot1dropsp))[1,1], coef(summary(plot2dropsp))[1,1], coef(summary(plot3dropsp))[1,1]),
+    intt = c(int_tval_plot(plot1dropsp, int_plot1_allsp), int_tval_plot(plot2dropsp, int_plot2_allsp), int_tval_plot(plot3dropsp, int_plot3_allsp)),
+    intp = c(int_pval_plot(plot1dropsp, int_plot1_allsp), int_pval_plot(plot2dropsp, int_plot1_allsp), int_pval_plot(plot3dropsp, int_plot1_allsp)),
+    df = c(plot1dropsp$df.residual, plot2dropsp$df.residual, plot3dropsp$df.residual )
     )
   return(ttable)
 }
 
-bind_rows(drop_top3_sp("p01"), drop_top3_sp(c("p01","p02")),drop_top3_sp(c("p01","p02","p08"))) %>% #drop the most abundant parasitoid taxon (p01), then drop the two most abundant taxa, then drop the three most abundant taxa. compare coefficient values (average of all three plots), run one sample ttests and combine into one table.
-  select(-c(origbeta,origint,diffbeta,diffint,bdf,idf,bp,ip)) %>%
+bind_rows(drop_top3_sp("p01"), drop_top3_sp(c("p01","p02")),drop_top3_sp(c("p01","p02","p08"))) %>% #drop the most abundant parasitoid taxon (p01), then drop the two most abundant taxa, then drop the three most abundant taxa. compare coefficient values, run one sample ttests and combine into one table.
   data.frame()
 #---
 
@@ -537,41 +529,47 @@ plot3bipartite<-bipartitegraphSBWALTplotprep %>%
 
 intdistplot1<-plot1bipartite%>%
   lapply(function(x) {y<-data.frame(t(x))
-  if ("ALT" %in% colnames(y)) 
-  {mutate(y,ALT=ifelse(ALT==0,NA,ALT),SBW=ifelse(SBW==0,NA,SBW))%>%
+  if ("ALT" %in% colnames(y)) {
+  mutate(y,ALT=ifelse(ALT==0,NA,ALT),SBW=ifelse(SBW==0,NA,SBW))%>%
       summarise(medALT=median(ALT, na.rm=TRUE),maxALT=max(ALT,na.rm=TRUE),medSBW=median(SBW, na.rm=TRUE),maxSBW=max(SBW, na.rm=TRUE))%>%
-      mutate(medmaxratioALT=medALT/maxALT,medmaxratioSBW=medSBW/maxSBW)}
-  else
-  {mutate(y,SBW=ifelse(SBW==0,NA,SBW))%>%
+      mutate(medmaxratioALT=medALT/maxALT,medmaxratioSBW=medSBW/maxSBW)
+  } else {
+  mutate(y,SBW=ifelse(SBW==0,NA,SBW))%>%
       summarise(medSBW=median(SBW, na.rm=TRUE),maxSBW=max(SBW, na.rm=TRUE))%>%
-      mutate(medmaxratioSBW=medSBW/maxSBW)}})%>%
+      mutate(medmaxratioSBW=medSBW/maxSBW)
+    }
+  } )%>%
   bind_rows()%>%
   mutate(Year=names(plot1bipartite), Plot=1)# creates a dataframe of median to maximum interaction strength (number of emergences is a proxy for interaction strength) for parasitoids emerging from budworm (SBW) and other caterpillars (ALT).
 
 intdistplot2<-plot2bipartite%>%
   lapply(function(x) {y<-data.frame(t(x))
-  if ("SBW" %in% colnames(y)) 
-  {mutate(y,ALT=ifelse(ALT==0,NA,ALT),SBW=ifelse(SBW==0,NA,SBW))%>%
+  if ("SBW" %in% colnames(y)) { 
+    mutate(y,ALT=ifelse(ALT==0,NA,ALT),SBW=ifelse(SBW==0,NA,SBW))%>%
       summarise(medALT=median(ALT, na.rm=TRUE),maxALT=max(ALT,na.rm=TRUE),medSBW=median(SBW, na.rm=TRUE),maxSBW=max(SBW, na.rm=TRUE))%>%
-      mutate(medmaxratioALT=medALT/maxALT,medmaxratioSBW=medSBW/maxSBW)}
-  else
-  {mutate(y,ALT=ifelse(ALT==0,NA,ALT))%>%
+      mutate(medmaxratioALT=medALT/maxALT,medmaxratioSBW=medSBW/maxSBW)
+  } else {
+    mutate(y,ALT=ifelse(ALT==0,NA,ALT))%>%
       summarise(medALT=median(ALT, na.rm=TRUE),maxALT=max(ALT,na.rm=TRUE))%>%
-      mutate(medmaxratioALT=medALT/maxALT)}})%>%
+      mutate(medmaxratioALT=medALT/maxALT)
+    }
+  } )%>%
   bind_rows()%>%
   mutate(Year=names(plot2bipartite),Plot=2)# creates a dataframe of median to maximum interaction strength (number of emergences is a proxy for interaction strength) for parasitoids emerging from budworm (SBW) and other caterpillars (ALT).
 
 
 intdistplot3<-plot3bipartite%>%
   lapply(function(x) {y<-data.frame(t(x))
-  if ("SBW" %in% colnames(y)) 
-  {mutate(y,ALT=ifelse(ALT==0,NA,ALT),SBW=ifelse(SBW==0,NA,SBW))%>%
+  if ("SBW" %in% colnames(y)) {
+    mutate(y,ALT=ifelse(ALT==0,NA,ALT),SBW=ifelse(SBW==0,NA,SBW))%>%
       summarise(medALT=median(ALT, na.rm=TRUE),maxALT=max(ALT,na.rm=TRUE),medSBW=median(SBW, na.rm=TRUE),maxSBW=max(SBW, na.rm=TRUE))%>%
-      mutate(medmaxratioALT=medALT/maxALT,medmaxratioSBW=medSBW/maxSBW)}
-  else
-  {mutate(y,ALT=ifelse(ALT==0,NA,ALT))%>%
+      mutate(medmaxratioALT=medALT/maxALT,medmaxratioSBW=medSBW/maxSBW)
+  } else {
+    mutate(y,ALT=ifelse(ALT==0,NA,ALT))%>%
       summarise(medALT=median(ALT, na.rm=TRUE),maxALT=max(ALT,na.rm=TRUE))%>%
-      mutate(medmaxratioALT=medALT/maxALT)}})%>%
+      mutate(medmaxratioALT=medALT/maxALT)
+    }
+  } )%>%
   bind_rows()%>%
   mutate(Year=names(plot3bipartite),Plot=3)# creates a dataframe of median to maximum interaction strength (number of emergences is a proxy for interaction strength) for parasitoids emerging from budworm (SBW) and other caterpillars (ALT).
 
@@ -579,9 +577,26 @@ intdistall <- bind_rows(intdistplot1,intdistplot2,intdistplot3) %>%
   select(medmaxratioALT,medmaxratioSBW,Year, Plot) %>%
   rename(ALT=medmaxratioALT,SBW=medmaxratioSBW) %>%
   gather(SBWALT, medmax, -Year, -Plot) %>%
-  mutate(Plot=as.factor(Plot))
+  mutate(Plot=as.factor(Plot), SBWALT = as.factor(SBWALT))
+
+intdistall$medmax[intdistall$Year == 3 & intdistall$Plot == 3 & intdistall$SBWALT == "SBW"] <- NA
+intdistall$medmax[intdistall$Year == 4 & intdistall$Plot == 2 & intdistall$SBWALT == "SBW"] <- NA
+intdistall$medmax[intdistall$Year == 6 & intdistall$Plot == 2 & intdistall$SBWALT == "SBW"] <- NA
+intdistall$medmax[intdistall$Year == 7 & intdistall$Plot == 2 & intdistall$SBWALT == "SBW"] <- NA
+intdistall$medmax[intdistall$Year == 3 & intdistall$Plot == 3 & intdistall$SBWALT == "ALT"] <- NA
+intdistall$medmax[intdistall$Year == 10 & intdistall$Plot == 2 & intdistall$SBWALT == "ALT"] <- NA
+#SBW remove 3.3  4.2 6.2 7.2 (8.2 9.2 10.2 already NA) - removes med:max data values where SBW numbers less than 50
+#ALT remove 3.3 10.2 - removes med:max data values where ALT numbers less than 50
 
 intdistall$Year<-gsub("minus","-",intdistall$Year)
+
+intdistall %<>% mutate(Year = as.numeric(Year), dummyPeak = Year+4, dummyPeak2 = dummyPeak^2) %>%
+  filter(!is.na(medmax))
+
+intdistlmSBW <- lm(medmax ~ dummyPeak+dummyPeak2, data = filter(intdistall, SBWALT == "SBW"))
+intdistlmALT <- lm(medmax ~ dummyPeak+dummyPeak2, data = filter(intdistall, SBWALT == "ALT"))
+summary(intdistlmSBW)
+summary(intdistlmALT)
 
 intdistplot<-ggplot(intdistall)+
   geom_vline(xintercept=0)+
@@ -595,6 +610,7 @@ intdistplot<-ggplot(intdistall)+
     scale_x_continuous(breaks=c(-2,0,2,4,6,8,10))+scale_shape_manual(values=c(16,17,15))
 
 ggsave("figs/intdistplot.pdf",intdistplot,width=8,height=7) #Figure 4
+
 
 # Supporting Information -----------------------------------------------
 
@@ -626,7 +642,7 @@ communitydietswitchlog_p01<-interaction%>%
   scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+
   ylab("Log10 emergence \nbudworm:other caterpillars")+xlab("Log10 abundance \nbudworm:other caterpillars")
 
-ggsave("figs/communitydietswitchlogratio_p01.pdf", plot=communitydietswitchlog_p01, width=8,height=8) #Supplementary Figure
+ggsave("figs/communitydietswitchlogratio_p01.pdf", plot=communitydietswitchlog_p01, width=8,height=8) #Figure S1
 
 #Glypta fumiferanae
 communitydietswitchlog_p02<-interaction%>%
@@ -655,7 +671,7 @@ communitydietswitchlog_p02<-interaction%>%
   scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+
   ylab("Log10 emergence \nbudworm:other caterpillars")+xlab("Log10 abundance \nbudworm:other caterpillars")
 
-ggsave("figs/communitydietswitchlogratio_p02.pdf", plot=communitydietswitchlog_p02, width=8,height=8) #Supplementary Figure
+ggsave("figs/communitydietswitchlogratio_p02.pdf", plot=communitydietswitchlog_p02, width=8,height=8) #Figure S2
 
 #Smidtia fumiferanae
 communitydietswitchlog_p08<-interaction%>%
@@ -682,7 +698,7 @@ communitydietswitchlog_p08<-interaction%>%
   scale_shape_manual(values=c(16,17,15))+scale_linetype_manual(values=c("dotted","dashed","solid"))+scale_color_manual(name="Peak", breaks=c("b","p","a", "en"),labels=c("before","during","after", "endemic"), values=c("#39568CFF","#B8DE29FF", "#440154FF", "#1F968BFF"))+
   ylab("Log10 emergence from budworm")+xlab("Log10 abundance \nbudworm:other caterpillars")
 
-ggsave("figs/communitydietswitchlogratio_p08.pdf", plot=communitydietswitchlog_p08, width=8,height=8) #Supplementary Figure
+ggsave("figs/communitydietswitchlogratio_p08.pdf", plot=communitydietswitchlog_p08, width=8,height=8) #Figure S3
 
 
 #Creation of bipartite graphs for extra years (Figures S4 and S5)
@@ -748,6 +764,109 @@ dev.off()
 pdf("figs/9plot.pdf",width=7,height=6)
 plotweb(as.matrix(bipartitegraphSBWALT$'9'),ybig=1.6,high.spacing=0.1,x.lim=c(0,1.16),labsize=2.2,high.lab.dis=0.12,low.xoff = 0.05,col.low=c("#C73D73FF","#2D1160FF"), col.high="#160F3BFF",col.interaction="#FECC8FFF")
 dev.off()
+
+#Calculate number of budworm and other caterpillars in each year and plot (Table S1) (needed in simulations below)
+SBWALTabundpara <- full_join(ratioSBWparacommunity,ratioSBWbypeakplot,by=c("Peak","Plot")) %>%
+  select(c(Peak, Plot, TotSBW, TotALT, TotSBWEmerge, TotALTEmerge)) %>%
+  mutate(paraSBW = TotSBWEmerge/TotSBW, paraALT = TotALTEmerge/TotALT)
+
+summary(SBWALTabundpara)
+
+# Simulation of a community of parasitoids attacking two types of hosts indiscriminately using the sample numbers of budworm and other caterpillars (original code and idea by Brian Van Hezewijk)
+paraSp <- c(1:51)
+paraAttRates<-round(0.3*0.3^paraSp,4)+0.001 #generate a distribution of plausible attack rates. Rare parasitoids attack 1 in 500 hosts
+survRate<-1-sum(paraAttRates[1:50])
+paraAttRates[51]<-survRate # set the 51st attack rate to the survival rate
+sum(paraAttRates)  # check to see if they all sum to unity
+
+set.seed(12345)
+
+medmax <- function (x) {
+  medmaxdata <- tibble(
+    Yr = x$Yr[1],
+    med=median(x$Freq, na.rm=TRUE),
+    max=max(x$Freq, na.rm=TRUE),
+    medmax=med/max
+  )
+  return(medmaxdata)
+}
+
+simul_plot <- function(plot){
+  totCollA<-round(SBWALTabundpara$TotSBW[SBWALTabundpara$Plot==plot],0) # mean number of budworm sampled each year
+  years<- 1:length(totCollA)
+
+  sampYear<-rep(years, times = totCollA)
+  dat<-data.frame(sampYear=sampYear,para=0)
+
+  # randomly assign parasitoid attacks to the hosts according to the distribution of species-specific attack rates
+  for (i in years){
+    pA<-sample(paraSp,totCollA[i],prob=paraAttRates,replace=TRUE)
+    dat$para[dat$sampYear==i]<-pA
+  }
+  dat$para[dat$para==51] <- NA
+  
+  medmaxdata <- as.data.frame(table(dat$para,dat$sampYear)) %>%
+    mutate(Freq = ifelse(Freq == 0, NA, Freq)) %>%
+    rename(para = Var1, Yr = Var2) %>%
+    mutate(Freq = as.numeric(Freq)) %>%
+    select(Yr, Freq) %>%
+    split(.$Yr) %>%
+    map(medmax) %>%
+    bind_rows() %>%
+    mutate(Plot = plot)
+  return(medmaxdata)
+}
+
+
+rep_coeff <- function() {
+  intdistall_simul <- bind_rows(simul_plot(1),simul_plot(2),simul_plot(3)) %>%
+    mutate(Yr = as.numeric(Yr), RelYear = ifelse(Plot %in% c(1,3), Yr-4, Yr)) %>%
+    select(RelYear, Plot, medmax) %>%
+    mutate(Plot=as.factor(Plot), dummyPeak = RelYear + 4, dummyPeak2 = dummyPeak^2)
+  intdistall_simul$medmax[intdistall_simul$RelYear == 3 & intdistall_simul$Plot == 3] <- NA
+  intdistall_simul$medmax[intdistall_simul$RelYear == 4 & intdistall_simul$Plot == 2] <- NA
+  intdistall_simul$medmax[intdistall_simul$RelYear == 6 & intdistall_simul$Plot == 2] <- NA
+  intdistall_simul$medmax[intdistall_simul$RelYear == 7 & intdistall_simul$Plot == 2] <- NA
+  #SBW remove Year 3 plot 3,  Year 4 Plot 2, Year 6 Plot 2, Year 7 Plot 2 - removed same med:max datavalues in in real data
+  intdistlm <- lm(medmax ~ dummyPeak+dummyPeak2, data = intdistall_simul)
+  return(coefficients(intdistlm)[3])
+}
+
+simulateddata <- replicate(10000,rep_coeff())
+
+simulateddata_plot <- ggplot(data.frame(simulateddata), aes(x=simulateddata)) +
+  geom_histogram(color="black", fill="white") + 
+  geom_vline(xintercept = 0.007557, size = 1, linetype = "dashed", colour = "black") +
+  xlab(quote('Simulated relative'~year^2~' coefficient')) +ylab(quote(Count))
+
+ggsave("figs/simulateddata_plot.png",simulateddata_plot,width=8,height=7) # Figure S6
+
+exceed_count <- length(simulateddata[simulateddata <= 0.007557])
+
+2 * exceed_count / 10000 #p-value (two tailed) - 0.8188
+
+# plot dominance of weak interactions vs sampling year
+intdistall_simul <- bind_rows(simul_plot(1),simul_plot(2),simul_plot(3)) %>%
+  mutate(Yr = as.numeric(Yr), RelYear = ifelse(Plot %in% c(1,3), Yr-4, Yr)) %>%
+  select(RelYear, Plot, medmax) %>%
+  mutate(Plot=as.factor(Plot))
+
+intdistall_simul$medmax[intdistall_simul$RelYear == 3 & intdistall_simul$Plot == 3] <- NA
+intdistall_simul$medmax[intdistall_simul$RelYear == 4 & intdistall_simul$Plot == 2] <- NA
+intdistall_simul$medmax[intdistall_simul$RelYear == 6 & intdistall_simul$Plot == 2] <- NA
+intdistall_simul$medmax[intdistall_simul$RelYear == 7 & intdistall_simul$Plot == 2] <- NA
+
+intdistsimulplot <- ggplot(intdistall_simul)+
+  geom_vline(xintercept=0)+
+  geom_point(aes(RelYear, medmax, shape = Plot), size=5)+
+  xlab("Years before/after peak")+ylab("Median:maximum \ninteraction strength")+ylim(c(0,0.65))+
+  theme(legend.text=element_text(size=14),
+        legend.title=element_text(size=15),
+        legend.justification=c(0,1),
+        legend.position=c(0.01,0.99))+
+  scale_x_continuous(breaks=c(-2,0,2,4), limits = c(-3,5))+scale_shape_manual(values=c(16,17,15))
+
+ggsave("figs/intdistsimulplot.png",intdistsimulplot,width=8,height=6) # Figure S7
 
 # Useful Extra Analyses ---------------------------------------------------
 # Determine percentage of emergences for dropped unresolved taxa. Used in last sentence of Laboratory Work section of Methods
@@ -816,7 +935,6 @@ SBWabund<-interaction %>%
   rbind(tibble(Peak=10,Plot=as.factor(2),TotSBW=0,bpae = "en")) %>%
   group_by(bpae) %>%
   summarise(minSBW=min(TotSBW), maxSBW=max(TotSBW), avSBW=mean(TotSBW))
-
 
 ###Linear mixed effects model of log10 ratio PER CAPITA parasitoid emergence from budworm and other caterpillars to the log10 ratio of total budworm to other caterpillars. Using the diet switching method outlined by Greenwood, J. J. D., and R. A. Elton. 1979. Analysing experiments on frequency-dependent selection by predators. The Journal of Animal Ecology 48:721.
 
@@ -933,28 +1051,7 @@ comswitchlogratiopcapplot<-ggplot(communitydietswitch,aes(logratioSBWpeakplot, l
 
 ggsave("figs/communitydietswitchlogratiopcap.pdf", plot=comswitchlogratioplotpcap, width=8,height=8)
 
-## Calculate abundances of budworm and other caterpillars (mean and range). Used near end of caterpillar and parasitoid sampling section
-SBWmeanvar<-interaction %>%
-  filter(SpecID.low=="h01") %>%
-  group_by(Peak, Plot) %>%
-  summarise(TotSBW = length(SpecID.low)) %>%
-  ungroup()
-
-mean(SBWmeanvar$TotSBW)
-min(SBWmeanvar$TotSBW)
-max(SBWmeanvar$TotSBW)
-
-ALTmeanvar<-interaction %>%
-  filter(!SpecID.low=="h01") %>%
-  group_by(Peak, Plot) %>%
-  summarise(TotALT = length(SpecID.low)) %>%
-  ungroup() 
-
-mean(ALTmeanvar$TotALT)
-min(ALTmeanvar$TotALT)
-max(ALTmeanvar$TotALT)
-
-# Reason why using three parasitoid taxa (used in second paragraph of Parasitoid community host preference section of Methods)
+# Reason why using three parasitoid taxa (used in second paragraph of Parasitoid community host preference section of Methods )
 threepara <- numSBWALTbyspeciesdata %>%
   mutate(totemer = NSBW + NALT)
 
